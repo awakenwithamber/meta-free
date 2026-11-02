@@ -1,4 +1,4 @@
-:root{--plum:#2a1233;--plum2:#3d1a4a;--gold:#d4af37;--gold2:#f0d98c;--parchment:#f7edd7;--ink:#241430;--card:#fffaf0;--line:#e6d9b8}
+:root{color-scheme:light;--plum:#2a1233;--plum2:#3d1a4a;--gold:#d4af37;--gold2:#f0d98c;--parchment:#f7edd7;--ink:#241430;--card:#fffaf0;--line:#e6d9b8}
 *{box-sizing:border-box}
 body{margin:0;font-family:"EB Garamond",Georgia,serif;background:linear-gradient(180deg,var(--plum),#1c0b24);color:var(--ink);min-height:100vh}
 .brand-font{font-family:"Cinzel Decorative","Cinzel",serif;letter-spacing:.04em}
