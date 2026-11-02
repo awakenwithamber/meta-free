@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meta Free — your social workspace, free forever</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header>
+  <div class="brand"><span class="brand-font">Meta Free</span> <span class="tag">Free forever · No per-profile fees · Your data stays yours</span></div>
+  <nav id="topnav" hidden>
+    <button data-view="dashboard">Dashboard</button>
+    <button data-view="planner">Planner</button>
+    <button data-view="inbox">Inbox</button>
+    <button data-view="links">Link Page</button>
+    <button data-view="analytics">Analytics</button>
+    <button data-view="team">Team &amp; Settings</button>
+    <button id="logout">Sign out</button>
+  </nav>
+</header>
+
+<main id="auth" >
+  <section class="card">
+    <h1 class="brand-font">Welcome to Meta Free</h1>
+    <p>Everything Meta One charges $14.99–$499/mo <em>per profile</em> for — planning, link pages, analytics, inbox help, team access — as a free workspace you own. The one thing no app can give you is Meta's own verified badge; everything else is here, unmetered.</p>
+    <div class="cols">
+      <form id="loginForm">
+        <h2>Sign in</h2>
+        <label>Email <input type="email" name="email" required autocomplete="email"></label>
+        <label>Password <input type="password" name="password" required autocomplete="current-password"></label>
+        <button type="submit">Sign in</button>
+      </form>
+      <form id="registerForm">
+        <h2>Create your free workspace</h2>
+        <label>Your name <input name="name" autocomplete="name"></label>
+        <label>Email <input type="email" name="email" required autocomplete="email"></label>
+        <label>Password (8+ characters) <input type="password" name="password" required autocomplete="new-password"></label>
+        <label>Brand / workspace name <input name="workspace" placeholder="Awaken With Amber"></label>
+        <button type="submit">Create free account</button>
+      </form>
+    </div>
+    <p class="err" id="authErr" role="alert"></p>
+  </section>
+</main>
+
+<main id="app" hidden>
+  <form id="commandForm" class="card command">
+    <label for="command"><strong>Command bar</strong> — try: <code>schedule New soap drop https://awakenagain.com tomorrow at 9am on instagram #handmade</code></label>
+    <div class="row"><input id="command" placeholder="schedule … / post … / draft …" aria-label="Natural language command"><button type="submit">Run</button></div>
+    <p class="ok" id="commandMsg" role="status"></p>
+  </form>
+
+  <section id="view-dashboard" class="view">
+    <div class="grid" id="dashWidgets"></div>
+    <div class="card"><h2>Upcoming scheduled</h2><ul id="upcoming"></ul></div>
+    <div class="card"><h2>Best times to post <small>(from your imported data)</small></h2><ul id="bestTimes"></ul></div>
+    <div class="card"><h2>Recent activity</h2><ul id="notifs"></ul></div>
+  </section>
+
+  <section id="view-planner" class="view" hidden>
+    <form id="postForm" class="card">
+      <h2>New post</h2>
+      <label>Platform <select name="platform"><option>facebook</option><option>instagram</option><option>whatsapp</option><option>threads</option><option>tiktok</option><option>youtube</option><option>linkedin</option><option>pinterest</option></select></label>
+      <label>Caption (links welcome — unlimited) <textarea name="caption" rows="3" required></textarea></label>
+      <div class="row">
+        <label>Status <select name="status"><option>draft</option><option>scheduled</option><option>ready</option><option>published</option></select></label>
+        <label>When <input type="datetime-local" name="scheduledAt"></label>
+      </div>
+      <button type="submit">Add post</button>
+      <button type="button" id="aiCaption">✨ Draft with local AI</button>
+    </form>
+    <div class="card"><h2>Posts</h2><p><a href="/api/posts/export.csv">Export posts CSV</a></p><ul id="postList" class="posts"></ul></div>
+  </section>
+
+  <section id="view-inbox" class="view" hidden>
+    <form id="msgForm" class="card">
+      <h2>Log an incoming message</h2>
+      <label>From <input name="from" placeholder="Customer name"></label>
+      <label>Platform <select name="platform"><option>instagram</option><option>facebook</option><option>whatsapp</option><option>threads</option></select></label>
+      <label>Message <textarea name="body" rows="2" required></textarea></label>
+      <button type="submit">Log + get suggested reply</button>
+    </form>
+    <form id="ruleForm" class="card">
+      <h2>Auto-reply rule</h2>
+      <label>When a message contains <input name="keyword" placeholder="hours" required></label>
+      <label>Reply with <textarea name="reply" rows="2" required></textarea></label>
+      <button type="submit">Add rule</button>
+      <ul id="ruleList"></ul>
+    </form>
+    <div class="card"><h2>Inbox</h2><ul id="msgList" class="posts"></ul></div>
+  </section>
+
+  <section id="view-links" class="view" hidden>
+    <div class="card">
+      <h2>Your link page</h2>
+      <p>Public page: <a id="publicLink" href="#" target="_blank" rel="noopener"></a> — unlimited links (Meta One Essential caps this at 20).</p>
+      <form id="linkForm">
+        <label>Title <input name="title" required placeholder="Shop Amber's Alchemy Apothecary"></label>
+        <label>URL <input name="url" required placeholder="https://awakenagain.com"></label>
+        <button type="submit">Add link</button>
+      </form>
+      <ul id="linkList" class="posts"></ul>
+    </div>
+  </section>
+
+  <section id="view-analytics" class="view" hidden>
+    <div class="card">
+      <h2>Analytics — unlimited history, yours to keep</h2>
+      <p>Import a CSV with columns: <code>platform,timestamp,likes,comments,shares,clicks,reach</code></p>
+      <textarea id="csvBox" rows="5" placeholder="platform,timestamp,likes,comments,shares,clicks,reach&#10;instagram,2026-11-01T15:00,42,6,3,18,900"></textarea>
+      <div class="row"><button id="importCsv">Import CSV</button> <a href="/api/metrics/export.csv">Export metrics CSV</a></div>
+      <div id="rollup"></div>
+    </div>
+    <form id="competitorForm" class="card">
+      <h2>Competitor watch <small>(unlimited — Meta One caps at 10)</small></h2>
+      <label>Handle <input name="handle" placeholder="@somebrand" required></label>
+      <label>Notes <input name="notes" placeholder="Posts daily, heavy Reels"></label>
+      <button type="submit">Add</button>
+      <ul id="competitorList"></ul>
+    </form>
+    <form id="watchForm" class="card">
+      <h2>Impersonation watchlist</h2>
+      <p><small>Record impersonator accounts and whether you've reported them. This is record-keeping — actual takedown protection is Meta-internal.</small></p>
+      <label>Handle <input name="handle" required></label>
+      <label>Notes <input name="notes"></label>
+      <button type="submit">Add to watchlist</button>
+      <ul id="watchList"></ul>
+    </form>
+  </section>
+
+  <section id="view-team" class="view" hidden>
+    <div class="card"><h2>Team — no password sharing, ever</h2><ul id="memberList"></ul>
+      <form id="inviteForm"><label>Email <input type="email" name="email" required></label>
+      <label>Role <select name="role"><option>viewer</option><option>editor</option></select></label>
+      <button type="submit">Create invite code</button><p class="ok" id="inviteMsg"></p></form>
+      <form id="joinForm"><label>Join with invite code <input name="code" required></label><button type="submit">Join workspace</button></form>
+    </div>
+    <form id="settingsForm" class="card">
+      <h2>Workspace settings</h2>
+      <label>Name <input name="name"></label>
+      <label>Tagline <input name="tagline"></label>
+      <label>Hours <input name="hours" placeholder="Mon–Fri 11–7"></label>
+      <fieldset><legend>Dashboard widgets</legend>
+        <label><input type="checkbox" name="w_planner"> Planner</label>
+        <label><input type="checkbox" name="w_inbox"> Inbox</label>
+        <label><input type="checkbox" name="w_analytics"> Analytics</label>
+        <label><input type="checkbox" name="w_links"> Links</label>
+        <label><input type="checkbox" name="w_bestTimes"> Best times</label>
+        <label><input type="checkbox" name="w_competitors"> Competitors</label>
+      </fieldset>
+      <button type="submit">Save settings</button>
+    </form>
+    <div class="card"><h2>Your data</h2>
+      <p><a href="/api/export">Export everything (JSON)</a></p>
+      <label>Import workspace JSON <textarea id="importBox" rows="3" placeholder='{"posts":[…]}'></textarea></label>
+      <div class="row"><button id="importJson">Import</button> <button id="wipe" class="danger">Wipe workspace data</button></div>
+      <h3>Plugins</h3><ul id="pluginList"></ul>
+      <h3>Ask Meta Free</h3>
+      <form id="askForm"><label>Question <input name="question" placeholder="How do I export?"></label><button type="submit">Ask</button><p id="askAnswer"></p></form>
+    </div>
+  </section>
+</main>
+<footer><small>Meta Free v0.1 — free, local-first, open. Not affiliated with Meta Platforms, Inc. “Meta One” is referenced only to describe the subscription this tool offers an alternative workflow to.</small></footer>
+<script src="/app.js"></script>
+</body>
+</html>
