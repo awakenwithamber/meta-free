@@ -16,6 +16,7 @@
     <button data-view="inbox">Inbox</button>
     <button data-view="links">Link Page</button>
     <button data-view="analytics">Analytics</button>
+    <button data-view="connect">Connect</button>
     <button data-view="team">Team &amp; Settings</button>
     <button id="logout">Sign out</button>
   </nav>
@@ -128,6 +129,22 @@
       <button type="submit">Add to watchlist</button>
       <ul id="watchList"></ul>
     </form>
+  </section>
+
+  <section id="view-connect" class="view" hidden>
+    <div class="card">
+      <h2>Connected accounts</h2>
+      <p>Where each platform stands. <span class="badge">connected via Muse</span> = I can work it today. <span class="badge">action needed</span> = one named step is yours. <span class="badge">browser only</span> = no connector exists; fields are finished in that app/browser.</p>
+      <ul id="connList" class="posts"></ul>
+    </div>
+    <div class="card">
+      <h2>Profile Completion Agent</h2>
+      <p>Fills every empty field it can reach from your canonical sheet — workspace tagline &amp; hours, default link-page links, starter auto-reply rules — never overwriting anything you've set. It reports exactly what it filled and what still needs your hand. It is a bounded worker run on your tap, not a silent autopilot.</p>
+      <button id="runAgent">Run Profile Completion Agent</button>
+      <div id="agentReport"></div>
+      <h3>Canonical sheet the agent uses</h3>
+      <ul id="canonicalList"></ul>
+    </div>
   </section>
 
   <section id="view-team" class="view" hidden>

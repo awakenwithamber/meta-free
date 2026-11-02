@@ -56,6 +56,17 @@ $('#askForm').addEventListener('submit', async e => { e.preventDefault(); const 
 $('#importCsv').addEventListener('click', async () => { const r = await api('/api/metrics/import', { method: 'POST', body: JSON.stringify({ csv: $('#csvBox').value }) }); alert('Imported ' + r.added + ' rows'); refreshAll(); });
 $('#importJson').addEventListener('click', async () => { try { const data = JSON.parse($('#importBox').value); const r = await api('/api/import', { method: 'POST', body: JSON.stringify({ data }) }); alert('Imported ' + r.added + ' records'); refreshAll(); } catch (e) { alert(e.message); } });
 $('#wipe').addEventListener('click', async () => { if (confirm('Wipe all posts, links, messages, metrics and rules in this workspace?')) { await api('/api/wipe', { method: 'POST', body: '{}' }); refreshAll(); } });
+$('#runAgent').addEventListener('click', async () => {
+  const r = await api('/api/agent/run', { method: 'POST', body: '{}' });
+  renderAgentRun(r.run);
+  refreshAll();
+});
+function renderAgentRun(run) {
+  if (!run) { $('#agentReport').innerHTML = ''; return; }
+  $('#agentReport').innerHTML = `<p><strong>${esc(run.summary)}</strong></p>
+    ${run.filled.length ? '<p>Filled: ' + run.filled.map(esc).join(' · ') + '</p>' : ''}
+    ${run.needsHand && run.needsHand.length ? '<p>Needs your hand:</p><ul>' + run.needsHand.map(n => `<li>${esc(n)}</li>`).join('') + '</ul>' : ''}`;
+}
 
 $('#settingsForm').addEventListener('submit', async e => {
   e.preventDefault(); const d = formData(e.target);
@@ -108,6 +119,14 @@ async function refreshAll() {
   $('#watchList').innerHTML = watch.map(w => `<li>${esc(w.handle)} (${esc(w.platform)}) — ${esc(w.status)} ${esc(w.notes || '')}</li>`).join('');
   const members = (await api('/api/members')).members;
   $('#memberList').innerHTML = members.map(m => `<li>${esc(m.email)} — ${esc(m.role)}${m.inviteCode ? ' (invite pending)' : ''}</li>`).join('');
+  const conns = await api('/api/connections');
+  const statusLabel = { connected_via_muse: 'connected via Muse', action_needed: 'action needed', browser_only: 'browser only', api_ready: 'API ready', not_started: 'not started' };
+  $('#connList').innerHTML = conns.connections.map(c => `<li><span class="badge">${esc(c.platform)}</span><span class="badge">${esc(statusLabel[c.status] || c.status)}</span> <strong>${esc(c.handle || '')}</strong><br><small>${esc(c.note || '')}</small></li>`).join('');
+  const can = conns.canonical;
+  $('#canonicalList').innerHTML = [['Display name', can.displayName], ['Handle', can.handle], ['Website', can.website], ['Contact email (display)', can.emailDisplay], ['Business phone (display)', can.phoneDisplay], ['Location', can.location], ['Hours', can.hours]].map(([k, v]) => `<li><strong>${esc(k)}:</strong> ${esc(v)}</li>`).join('');
+  const runs = (await api('/api/agent/runs')).runs;
+  if (runs.length) renderAgentRun(runs[0]);
+
   const plugins = (await api('/api/plugins')).plugins;
   $('#pluginList').innerHTML = plugins.map(p => `<li><strong>${esc(p.name)}</strong> ${p.roadmap ? '<span class="badge">roadmap</span>' : p.enabled ? '<span class="badge">on</span>' : ''} — ${esc(p.description)}</li>`).join('');
 }

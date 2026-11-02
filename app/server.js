@@ -10,6 +10,8 @@ const { parseCommand, PLATFORMS } = require('./lib/nl');
 const assistant = require('./lib/assistant');
 const analytics = require('./lib/analytics');
 const { listPlugins, BUILTIN } = require('./lib/plugins');
+const { CANONICAL, seedConnections } = require('./lib/connections');
+const { runCompletion } = require('./lib/agent');
 
 const PORT = process.env.PORT || 4173;
 const ROOT = path.join(__dirname, '..');
@@ -281,6 +283,32 @@ ${links.map(l => `<a class="linkbtn" href="/go/${l.id}" rel="noopener">${esc(l.t
         return json(res, 200, { ok: true });
       }
 
+      // connections + profile completion agent
+      if (p === '/api/connections' && req.method === 'GET') {
+        const connections = seedConnections(store, wsId);
+        return json(res, 200, { connections, canonical: CANONICAL });
+      }
+      const connMatch = p.match(/^\/api\/connections\/(.+)$/);
+      if (connMatch && req.method === 'PATCH') {
+        if (!canWrite) return json(res, 403, { error: 'Viewer role cannot edit connections.' });
+        const b = await readBody(req);
+        const conn = store.find('connections', x => x.platform === connMatch[1] && x.workspaceId === wsId);
+        if (!conn) return json(res, 404, { error: 'Connection not found.' });
+        const patch = {};
+        if (b.status) patch.status = String(b.status).slice(0, 40);
+        if (b.handle !== undefined) patch.handle = String(b.handle).slice(0, 120);
+        if (b.note !== undefined) patch.note = String(b.note).slice(0, 500);
+        return json(res, 200, { connection: store.update('connections', conn.id, patch) });
+      }
+      if (p === '/api/agent/run' && req.method === 'POST') {
+        if (!canWrite) return json(res, 403, { error: 'Viewer role cannot run the agent.' });
+        const run = runCompletion(store, ws);
+        return json(res, 201, { run });
+      }
+      if (p === '/api/agent/runs' && req.method === 'GET') {
+        return json(res, 200, { runs: store.all('agentRuns', x => x.workspaceId === wsId).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).slice(0, 10) });
+      }
+
       // workspace settings, plugins, widgets, export/import/wipe
       if (p === '/api/workspace' && req.method === 'PATCH') {
         if (member.role !== 'owner') return json(res, 403, { error: 'Only the owner can change workspace settings.' });
@@ -312,7 +340,7 @@ ${links.map(l => `<a class="linkbtn" href="/go/${l.id}" rel="noopener">${esc(l.t
       }
       if (p === '/api/wipe' && req.method === 'POST') {
         if (member.role !== 'owner') return json(res, 403, { error: 'Only the owner can wipe the workspace.' });
-        for (const coll of ['posts', 'links', 'messages', 'metrics', 'rules', 'competitors', 'notifications', 'watchlist']) store.removeWhere(coll, x => x.workspaceId === wsId);
+        for (const coll of ['posts', 'links', 'messages', 'metrics', 'rules', 'competitors', 'notifications', 'watchlist', 'connections', 'agentRuns']) store.removeWhere(coll, x => x.workspaceId === wsId);
         return json(res, 200, { ok: true });
       }
 
