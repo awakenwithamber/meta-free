@@ -32,17 +32,18 @@ class BlobBackend {
     this.host = `https://${this.storeId}.private.blob.vercel-storage.com`;
   }
   // Returns the stored JSON text, or null when the blob does not exist yet.
-  async load() {
-    const res = await this.fetch(`${this.host}/${this.pathname}?cache=0`, {
+  // `pathname` defaults to the DB blob; backups pass their own versioned path.
+  async load(pathname = this.pathname) {
+    const res = await this.fetch(`${this.host}/${pathname}?cache=0`, {
       headers: { authorization: `Bearer ${this.token}` },
     });
     if (res.status === 404) return null;
     if (!res.ok) throw new Error(`blob load failed: HTTP ${res.status}`);
     return res.text();
   }
-  // Write-through: replaces the whole DB blob with the given JSON text.
-  async save(text) {
-    const res = await this.fetch(`${this.apiUrl}?pathname=${encodeURIComponent(this.pathname)}`, {
+  // Write-through: replaces the blob at `pathname` (default: the DB blob) with the text.
+  async save(text, pathname = this.pathname) {
+    const res = await this.fetch(`${this.apiUrl}?pathname=${encodeURIComponent(pathname)}`, {
       method: 'PUT',
       headers: {
         authorization: `Bearer ${this.token}`,
@@ -63,8 +64,29 @@ class BlobBackend {
     }
     return res.json().catch(() => ({}));
   }
-  // Deletes the DB blob (used by tests/cleanup tooling, not by the app itself).
-  async remove() {
+  // Lists blobs under a prefix: [{pathname, size, uploadedAt}], oldest pages followed.
+  async list(prefix = '') {
+    const out = [];
+    let cursor = null;
+    do {
+      const q = new URLSearchParams({ prefix, limit: '1000' });
+      if (cursor) q.set('cursor', cursor);
+      const res = await this.fetch(`${this.apiUrl}?${q.toString()}`, {
+        headers: {
+          authorization: `Bearer ${this.token}`,
+          'x-api-version': API_VERSION,
+          'x-vercel-blob-store-id': this.storeId,
+        },
+      });
+      if (!res.ok) throw new Error(`blob list failed: HTTP ${res.status}`);
+      const data = await res.json().catch(() => ({}));
+      for (const b of data.blobs || []) out.push({ pathname: b.pathname, size: b.size, uploadedAt: b.uploadedAt });
+      cursor = data.hasMore ? data.cursor : null;
+    } while (cursor);
+    return out;
+  }
+  // Deletes the blob at `pathname` (default: the DB blob; used by backup pruning too).
+  async remove(pathname = this.pathname) {
     const res = await this.fetch(`${this.apiUrl}/delete`, {
       method: 'POST',
       headers: {
@@ -73,7 +95,7 @@ class BlobBackend {
         'x-vercel-blob-store-id': this.storeId,
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ urls: [`${this.host}/${this.pathname}`] }),
+      body: JSON.stringify({ urls: [`${this.host}/${pathname}`] }),
     });
     if (!res.ok) throw new Error(`blob delete failed: HTTP ${res.status}`);
     return true;

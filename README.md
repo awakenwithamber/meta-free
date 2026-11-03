@@ -1,11 +1,12 @@
-# Meta Free
+# Meta Free — Enterprise Edition
 
-A free, local-first, self-hostable alternative to the workflow Meta One charges for.
+A free, local-first, self-hostable alternative to the workflow Meta One reserves for its paid tiers.
 
-**Meta One** (Meta Platforms, launched 15 Sep 2026, meta.com/meta-one-plans) sells creators and businesses:
-Essential **$14.99/mo per profile**, Advanced **$49.99**, Expert **$149**, Max **$499** — for a verified-badge application, a 20-link bio page, metered links in posts, 30-day Story scheduling, exportable analytics with >90-day history, competitor insights (≤10), metered AI replies, and team access without password sharing.
+**Free. No fees, no subscription, no payment — ever.**
 
-**Meta Free recreates everything in that list that belongs to you** — unlimited link pages, unlimited planned link posts, unlimited scheduling horizon, unlimited analytics history with CSV/JSON export, unlimited competitor tracking, offline AI caption/reply help, role-based team access with invite codes — at **$0, with your data on your hardware**.
+**Meta One** (Meta Platforms, launched 15 Sep 2026, meta.com/meta-one-plans) sells creators and businesses a verified-badge application, a capped link page, metered links in posts, Story scheduling windows, exportable analytics with history limits, capped competitor insights, metered AI replies, and team access — tier by tier, profile by profile.
+
+**Meta Free recreates everything in that list that belongs to you, at the Enterprise level, for every workspace** — unlimited link pages, unlimited planned link posts, unlimited scheduling horizon, unlimited analytics history with CSV/JSON export, unlimited competitor tracking, offline AI caption/reply help, role-based team access with invite codes, a post approval workflow, a due queue, an activity/audit log, and automated backups — with your data on your hardware.
 
 Honest limit: no third-party app can issue Meta's verified badge, run Meta's impersonation protection, or lift caps inside Meta's own apps. Meta Free says so in the product, in the audit (docs/01), and keeps a watchlist tool to help you record and report impersonators.
 
@@ -13,7 +14,7 @@ Honest limit: no third-party app can issue Meta's verified badge, run Meta's imp
 ```bash
 node app/server.js     # Node ≥20, zero dependencies, nothing to install
 # → http://localhost:4173
-npm test               # 18 automated tests
+npm test               # 26 automated tests
 ```
 
 ## Docs
@@ -24,12 +25,14 @@ npm test               # 18 automated tests
 - [05 — Deployment, user guide & roadmap](docs/05-deployment-user-guide-roadmap.md)
 - [06 — Connections & the Profile Completion Agent](docs/06-connections-and-agent.md)
 - [07 — Storage backends](docs/07-storage.md) (local file, or durable private Vercel Blob when `BLOB_READ_WRITE_TOKEN` is set)
+- [08 — Enterprise Edition](docs/08-enterprise.md) (everything on: approvals, due queue, audit log, backups — and no payments, anywhere)
 
 ## Layout
 ```
 app/server.js        server + REST API
-app/lib/             store (+ durable Blob backend), auth, nl parser, assistant, analytics, plugins
-public/              dashboard / planner / inbox / links / analytics / team UI
+app/lib/             store (+ durable Blob backend), auth, nl parser, assistant, analytics, plugins,
+                     enterprise (edition + features), activity (audit log), approvals, backups
+public/              dashboard / planner / inbox / links / analytics / connect / activity / enterprise / team UI
 tests/               node:test suite
 data/db.json         your database (created on first run; back this file up)
 ```

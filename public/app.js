@@ -91,13 +91,32 @@ async function refreshAll() {
   $('#notifs').innerHTML = dash.notifications.map(n => `<li>${esc(new Date(n.createdAt).toLocaleString())} — ${esc(n.text)}</li>`).join('') || '<li>No activity yet.</li>';
 
   const posts = (await api('/api/posts')).posts;
-  $('#postList').innerHTML = posts.map(p => `<li><span class="badge">${esc(p.platform)}</span><span class="badge">${esc(p.status)}</span> ${p.scheduledAt ? esc(new Date(p.scheduledAt).toLocaleString()) + ' — ' : ''}${esc(p.caption)} <button data-act="copy" data-id="${p.id}">Copy</button> ${p.status !== 'published' ? `<button data-act="pub" data-id="${p.id}">Mark published</button>` : ''} <button data-act="del" data-id="${p.id}">Delete</button></li>`).join('') || '<li>No posts yet.</li>';
+  const apprLabel = { draft: 'draft', pending_review: 'in review', approved: 'approved' };
+  const apprButtons = p => {
+    const a = p.approval || 'approved';
+    if (a === 'draft') return `<button data-act="submit" data-id="${p.id}">Submit for review</button>`;
+    if (a === 'pending_review') return `<button data-act="approve" data-id="${p.id}">Approve</button> <button data-act="sendback" data-id="${p.id}">Send back</button>`;
+    return `<button data-act="sendback" data-id="${p.id}">Back to draft</button>`;
+  };
+  $('#postList').innerHTML = posts.map(p => `<li><span class="badge">${esc(p.platform)}</span><span class="badge">${esc(p.status)}</span><span class="badge">${esc(apprLabel[p.approval] || 'approved')}</span> ${p.scheduledAt ? esc(new Date(p.scheduledAt).toLocaleString()) + ' — ' : ''}${esc(p.caption)} <button data-act="copy" data-id="${p.id}">Copy</button> ${apprButtons(p)} ${p.status !== 'published' ? `<button data-act="pub" data-id="${p.id}">Mark published</button>` : ''} <button data-act="del" data-id="${p.id}">Delete</button></li>`).join('') || '<li>No posts yet.</li>';
   $('#postList').querySelectorAll('button').forEach(b => b.addEventListener('click', async () => {
     const post = posts.find(x => x.id === b.dataset.id);
     if (b.dataset.act === 'copy') { await navigator.clipboard.writeText(post.caption); b.textContent = 'Copied ✓'; }
     if (b.dataset.act === 'pub') { await api('/api/posts/' + post.id, { method: 'PATCH', body: JSON.stringify({ status: 'published' }) }); refreshAll(); }
+    if (b.dataset.act === 'submit') { await api('/api/posts/' + post.id, { method: 'PATCH', body: JSON.stringify({ approval: 'pending_review' }) }); refreshAll(); }
+    if (b.dataset.act === 'approve') { await api('/api/posts/' + post.id, { method: 'PATCH', body: JSON.stringify({ approval: 'approved' }) }); refreshAll(); }
+    if (b.dataset.act === 'sendback') { await api('/api/posts/' + post.id, { method: 'PATCH', body: JSON.stringify({ approval: 'draft' }) }); refreshAll(); }
     if (b.dataset.act === 'del') { await api('/api/posts/' + post.id, { method: 'DELETE' }); refreshAll(); }
   }));
+
+  const due = await api('/api/due');
+  $('#dueList').innerHTML = due.ready.map(p => `<li><span class="badge">${esc(p.platform)}</span><span class="badge">due</span> ${esc(new Date(p.scheduledAt).toLocaleString())} — ${esc(p.caption)} <button data-due="copy" data-id="${p.id}">Copy</button> <button data-due="pub" data-id="${p.id}">Mark published</button></li>`).join('') || '<li>Nothing due right now.</li>';
+  $('#dueList').querySelectorAll('button').forEach(b => b.addEventListener('click', async () => {
+    const post = due.ready.find(x => x.id === b.dataset.id);
+    if (b.dataset.due === 'copy') { await navigator.clipboard.writeText(post.caption); b.textContent = 'Copied ✓'; }
+    if (b.dataset.due === 'pub') { await api('/api/posts/' + post.id, { method: 'PATCH', body: JSON.stringify({ status: 'published' }) }); refreshAll(); }
+  }));
+  $('#dueAwaiting').textContent = due.awaitingApproval.length ? `${due.awaitingApproval.length} due post(s) are still waiting on approval and are not in the publish queue yet.` : '';
 
   const msgs = (await api('/api/messages')).messages;
   $('#msgList').innerHTML = msgs.map(m => `<li><span class="badge">${esc(m.platform)}</span><strong>${esc(m.from)}:</strong> ${esc(m.body)}<br><em>Suggested reply${m.autoRule ? ' (auto-rule)' : ''}:</em> ${esc(m.suggestedReply || '')} ${m.status === 'open' ? `<button data-id="${m.id}">Mark resolved</button>` : '✓ resolved'}</li>`).join('') || '<li>Inbox is empty.</li>';
@@ -129,5 +148,32 @@ async function refreshAll() {
 
   const plugins = (await api('/api/plugins')).plugins;
   $('#pluginList').innerHTML = plugins.map(p => `<li><strong>${esc(p.name)}</strong> ${p.roadmap ? '<span class="badge">roadmap</span>' : p.enabled ? '<span class="badge">on</span>' : ''} — ${esc(p.description)}</li>`).join('');
+
+  const activity = (await api('/api/activity')).activity;
+  $('#activityList').innerHTML = activity.map(a => `<li>${esc(new Date(a.createdAt).toLocaleString())} — <strong>${esc(a.actor)}</strong> · ${esc(a.action)}${a.detail ? ' · ' + esc(a.detail) : ''}</li>`).join('') || '<li>No activity recorded yet.</li>';
+
+  const ent = await api('/api/enterprise');
+  $('#entFreeLine').textContent = ent.freeLine;
+  $('#entStorage').textContent = `Edition: ${ent.edition} · Storage: ${ent.storage} · Backups kept: ${ent.backupsKept}`;
+  $('#entLimit').textContent = ent.honestLimit;
+  $('#backupKeep').textContent = ent.backupsKept;
+  $('#featureList').innerHTML = ent.features.map(f => `<li>✓ <strong>${esc(f.name)}</strong> — ${esc(f.note)}</li>`).join('');
+  if (ME.role === 'owner') {
+    const bk = await api('/api/backups');
+    $('#backupList').innerHTML = bk.backups.map(b => `<li>${esc(b.name)} · ${esc(new Date(b.uploadedAt).toLocaleString())} · ${Math.round((b.size || 0) / 1024)} KB <button data-backup="${esc(b.name)}">Restore</button></li>`).join('') || '<li>No backups yet — take the first one.</li>';
+    $('#backupList').querySelectorAll('button').forEach(btn => btn.addEventListener('click', async () => {
+      if (confirm('Restore the whole database from ' + btn.dataset.backup + '? A safety snapshot of the current state is taken first.')) {
+        await api('/api/backups/restore', { method: 'POST', body: JSON.stringify({ name: btn.dataset.backup }) });
+        $('#backupMsg').textContent = 'Restored from ' + btn.dataset.backup;
+        refreshAll();
+      }
+    }));
+  } else {
+    $('#backupList').innerHTML = '<li>Backups are managed by the workspace owner.</li>';
+  }
 }
+$('#backupNow').addEventListener('click', async () => {
+  try { const r = await api('/api/backups', { method: 'POST', body: '{}' }); $('#backupMsg').textContent = 'Backup saved: ' + r.backup.name; refreshAll(); }
+  catch (err) { $('#backupMsg').textContent = err.message; }
+});
 boot();

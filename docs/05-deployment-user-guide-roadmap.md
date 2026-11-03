@@ -1,6 +1,6 @@
 # Meta Free — Deployment, User Guide & Roadmap
 
-## Deployment (pick one — all $0 to start)
+## Deployment (pick one — all free to start)
 
 ### A. On your own computer / this VM (simplest, what was verified)
 ```bash
@@ -15,7 +15,7 @@ Keep it running with any process keeper (`pm2`, `systemd`, `nohup`). Data lives 
 The app is a single Node process with no build step, so it fits free web-service tiers (e.g. Render/Fly free or trial tiers) and any VPS:
 1. Push this folder to a Git repo, create a web service, start command: `node app/server.js`.
 2. Set `PORT` if your host requires it (the app already reads `PORT`).
-3. **Honest limits:** free tiers may sleep when idle (first visit wakes it, ~30s), may have ephemeral disks — if the disk resets, `data/db.json` resets. For anything you care about, option A (your own hardware) or a paid tiny VPS is the durable choice; the app itself stays $0 forever.
+3. **Honest limits:** free tiers may sleep when idle (first visit wakes it, ~30s), may have ephemeral disks — if the disk resets, `data/db.json` resets. For anything you care about, option A (your own hardware) or a small VPS is the durable choice; the app itself stays free forever.
 
 ### D. Vercel (the live deployment)
 Deployed at https://meta-free-awakenagain2.vercel.app. Storage is **durable**: a private
@@ -35,14 +35,16 @@ Put it behind Caddy or nginx with automatic TLS, pointed at the Node port. Set t
 4. **Inbox** — log customer messages; you get a suggested reply instantly (price/hours/shipping/order intents built in). Add auto-reply rules for your FAQs.
 5. **Analytics** — export a CSV from wherever you have numbers, match the columns `platform,timestamp,likes,comments,shares,clicks,reach`, import. Your history never expires and exports back out any time.
 6. **Team** — Team & Settings → invite by email, share the code privately. Editors can plan; viewers can look. Nobody ever shares a password.
-7. **Your data** — Export everything (JSON) for backup; import restores posts/links/rules/competitors. Wipe clears the workspace content.
-8. **Ask Meta Free** (Settings) — built-in help for common questions.
+7. **Your data** — Export everything (JSON) for backup; import restores posts/links/rules/competitors. Wipe clears the workspace content. A backup snapshot is taken automatically before every import and wipe; see Enterprise → Backups.
+8. **Planner approvals** — new posts start as drafts. Submit for review → an owner or editor approves → approved posts whose time arrives appear in **Due — ready to publish**: Copy → paste into the platform → Mark published.
+9. **Activity** — the audit log shows every key event (posts, approvals, rules, links, team, agent runs, backups) and exports as CSV.
+10. **Ask Meta Free** (Settings) — built-in help for common questions.
 
 ## Maintenance
 - Back up `data/db.json` (that's the whole database) on the file backend; on Vercel the
   durable copy is the Blob store — use Settings → Export JSON for a portable backup.
 - Update = replace `app/` and `public/`; your data file is untouched by code updates.
-- Tests: `npm test` (18 tests, Node's built-in runner).
+- Tests: `npm test` (26 tests, Node's built-in runner).
 
 ## Roadmap
 | Phase | Item | Blocker / note |
@@ -50,7 +52,7 @@ Put it behind Caddy or nginx with automatic TLS, pointed at the Node port. Set t
 | v0.2 | Direct publishing to Facebook/Instagram via Meta Content Publishing API | Needs a Meta developer app + app review — Amber's hand for app creation/terms |
 | v0.2 | WhatsApp Cloud API inbox (real messages in, auto-replies out) | Needs WhatsApp Business API setup for 801-819-6795 (already her chosen route from Oct 12) |
 | v0.2 | Scheduler worker that flips scheduled → ready + in-app/browser notifications | None — pure build |
-| v0.3 | Local LLM assistant via Ollama (offline, $0) | None — optional download of a local model |
+| v0.3 | Local LLM assistant via Ollama (offline, free) | None — optional download of a local model |
 | v0.3 | SQLite store swap, rate limiting, 2FA (TOTP), Secure cookie flag toggle | None |
 | v0.4 | Fediverse publishing (Mastodon/PeerTube) — audiences you fully own | None |
 | Ongoing | Evaluate Postiz/Postflare interop rather than rebuilding their platform-API breadth | Their stacks are heavier; Meta Free stays the light, owned core |

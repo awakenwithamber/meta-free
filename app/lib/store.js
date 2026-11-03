@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const COLLECTIONS = ['users','sessions','workspaces','posts','links','messages','metrics','rules','members','competitors','notifications','watchlist','connections','agentRuns'];
+const COLLECTIONS = ['users','sessions','workspaces','posts','links','messages','metrics','rules','members','competitors','notifications','watchlist','connections','agentRuns','activity'];
 
 function emptyDb() {
   const db = {};

@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
-<title>Meta Free — your social workspace, free forever</title>
+<title>Meta Free — Enterprise Edition · your social workspace, free forever</title>
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
 <header>
-  <div class="brand"><span class="brand-font">Meta Free</span> <span class="tag">Free forever · No per-profile fees · Your data stays yours</span></div>
+  <div class="brand"><span class="brand-font">Meta Free</span> <span class="badge">Enterprise Edition</span> <span class="tag">Free forever · Every feature on · Your data stays yours</span></div>
   <nav id="topnav" hidden>
     <button data-view="dashboard">Dashboard</button>
     <button data-view="planner">Planner</button>
@@ -17,6 +17,8 @@
     <button data-view="links">Link Page</button>
     <button data-view="analytics">Analytics</button>
     <button data-view="connect">Connect</button>
+    <button data-view="activity">Activity</button>
+    <button data-view="enterprise">Enterprise</button>
     <button data-view="team">Team &amp; Settings</button>
     <button id="logout">Sign out</button>
   </nav>
@@ -24,8 +26,8 @@
 
 <main id="auth" >
   <section class="card">
-    <h1 class="brand-font">Welcome to Meta Free</h1>
-    <p><strong>Free. No fees, no subscription, no payment — ever.</strong> Everything Meta One locks behind its paid plans — planning, link pages, analytics, inbox help, team access — as a free workspace you own. The one thing no app can give you is Meta's own verified badge; everything else is here, unmetered.</p>
+    <h1 class="brand-font">Welcome to Meta Free — Enterprise Edition</h1>
+    <p><strong>Free. No fees, no subscription, no payment — ever.</strong> Everything Meta One reserves for its top tiers — planning, link pages, analytics, inbox help, team access — is here in full: every feature on, nothing metered, nothing locked, in a workspace you own. The one thing no app can give you is Meta's own verified badge; everything else is here.</p>
     <div class="cols">
       <form id="loginForm">
         <h2>Sign in</h2>
@@ -61,12 +63,19 @@
   </section>
 
   <section id="view-planner" class="view" hidden>
+    <div class="card" id="dueCard">
+      <h2>Due — ready to publish</h2>
+      <p><small>Scheduled posts whose time has come and that are approved. Meta Free can't post into Meta's apps for you — copy, paste, then mark published.</small></p>
+      <ul id="dueList" class="posts"></ul>
+      <p id="dueAwaiting"></p>
+    </div>
     <form id="postForm" class="card">
       <h2>New post</h2>
       <label>Platform <select name="platform"><option>facebook</option><option>instagram</option><option>whatsapp</option><option>threads</option><option>tiktok</option><option>youtube</option><option>linkedin</option><option>pinterest</option></select></label>
       <label>Caption (links welcome — unlimited) <textarea name="caption" rows="3" required></textarea></label>
       <div class="row">
         <label>Status <select name="status"><option>draft</option><option>scheduled</option><option>ready</option><option>published</option></select></label>
+        <label>Approval <select name="approval"><option value="draft">Draft</option><option value="pending_review">Submit for review</option><option value="approved">Approved</option></select></label>
         <label>When <input type="datetime-local" name="scheduledAt"></label>
       </div>
       <button type="submit">Add post</button>
@@ -96,7 +105,7 @@
   <section id="view-links" class="view" hidden>
     <div class="card">
       <h2>Your link page</h2>
-      <p>Public page: <a id="publicLink" href="#" target="_blank" rel="noopener"></a> — unlimited links (Meta One Essential caps this at 20).</p>
+      <p>Public page: <a id="publicLink" href="#" target="_blank" rel="noopener"></a> — unlimited links, no caps.</p>
       <form id="linkForm">
         <label>Title <input name="title" required placeholder="Shop Amber's Alchemy Apothecary"></label>
         <label>URL <input name="url" required placeholder="https://awakenagain.com"></label>
@@ -115,7 +124,7 @@
       <div id="rollup"></div>
     </div>
     <form id="competitorForm" class="card">
-      <h2>Competitor watch <small>(unlimited — Meta One caps at 10)</small></h2>
+      <h2>Competitor watch <small>(unlimited)</small></h2>
       <label>Handle <input name="handle" placeholder="@somebrand" required></label>
       <label>Notes <input name="notes" placeholder="Posts daily, heavy Reels"></label>
       <button type="submit">Add</button>
@@ -144,6 +153,31 @@
       <div id="agentReport"></div>
       <h3>Canonical sheet the agent uses</h3>
       <ul id="canonicalList"></ul>
+    </div>
+  </section>
+
+  <section id="view-activity" class="view" hidden>
+    <div class="card">
+      <h2>Activity — audit log</h2>
+      <p>Every key event in this workspace: posts, approvals, rules, links, team changes, agent runs, backups. <a href="/api/activity/export.csv">Export activity CSV</a></p>
+      <ul id="activityList" class="posts"></ul>
+    </div>
+  </section>
+
+  <section id="view-enterprise" class="view" hidden>
+    <div class="card">
+      <h2>Enterprise Edition — everything on</h2>
+      <p><strong id="entFreeLine">Free. No fees, no subscription, no payment — ever.</strong></p>
+      <p id="entStorage"></p>
+      <ul id="featureList"></ul>
+      <p><small id="entLimit"></small></p>
+    </div>
+    <div class="card" id="backupCard">
+      <h2>Backups</h2>
+      <p>Versioned snapshots of the whole database, newest <span id="backupKeep">7</span> kept. A snapshot is also taken automatically before an import or a wipe.</p>
+      <button id="backupNow">Back up now</button>
+      <p class="ok" id="backupMsg" role="status"></p>
+      <ul id="backupList" class="posts"></ul>
     </div>
   </section>
 
@@ -179,7 +213,7 @@
     </div>
   </section>
 </main>
-<footer><small>Meta Free v0.1 — free, local-first, open. Not affiliated with Meta Platforms, Inc. “Meta One” is referenced only to describe the subscription this tool offers an alternative workflow to.</small></footer>
+<footer><small>Meta Free — Enterprise Edition · free, local-first, open. Not affiliated with Meta Platforms, Inc. “Meta One” is referenced only to describe the subscription this tool offers an alternative workflow to.</small></footer>
 <script src="/app.js"></script>
 </body>
 </html>

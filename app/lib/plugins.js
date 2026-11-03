@@ -10,7 +10,7 @@ const BUILTIN = [
   { id: 'impersonation-watchlist', name: 'Impersonation Watchlist', version: '1.0.0', description: 'Log impersonator accounts and report status — a record-keeping aid, not Meta-internal protection.', hooks: [] },
   { id: 'meta-publisher', name: 'Meta Publisher (roadmap)', version: '0.0.1', description: 'Direct publishing via Meta Content Publishing API. Requires a Meta developer app + app review (user-held step). Not active in v0.1.', hooks: ['publisher'], roadmap: true },
   { id: 'whatsapp-agent', name: 'WhatsApp Agent (roadmap)', version: '0.0.1', description: 'Auto-replies inside WhatsApp via the official Cloud API. Requires WhatsApp Business API setup. Not active in v0.1.', hooks: ['publisher'], roadmap: true },
-  { id: 'ollama-assistant', name: 'Local LLM Assistant (roadmap)', version: '0.0.1', description: 'Point the assistant at a local Ollama model for richer drafts — still $0 and offline.', hooks: ['assistantIntent'], roadmap: true },
+  { id: 'ollama-assistant', name: 'Local LLM Assistant (roadmap)', version: '0.0.1', description: 'Point the assistant at a local Ollama model for richer drafts — still free and offline.', hooks: ['assistantIntent'], roadmap: true },
 ];
 
 function listPlugins(workspace) {

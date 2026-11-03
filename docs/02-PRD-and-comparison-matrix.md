@@ -1,12 +1,12 @@
 # Meta Free — Product Requirements Document + Comparison Matrix
 
 ## Product
-**Meta Free** — a free, self-hostable, local-first workspace that recreates the *user-owned workflow* Meta One charges for: publishing planning, link pages, analytics, inbox/AI replies, team workflow and automations — with no subscription, no per-profile fees, no meters, and full data ownership.
+**Meta Free** — a free, self-hostable, local-first workspace that recreates the *user-owned workflow* Meta One sells by subscription: publishing planning, link pages, analytics, inbox/AI replies, team workflow and automations — with every feature on for every workspace, no meters, and full data ownership.
 
 **Non-goals (honest):** Meta Free does not and cannot issue Meta's verified badge, provide Meta's impersonation protection, lift Meta's in-app link caps, or run an agent natively inside WhatsApp. See audit §"Hard limits".
 
 ## Users
-Creators and small businesses paying (or about to pay) $14.99–$499/mo per profile for Meta One — starting with Amber / Awaken With Amber LLC, currently on Essential ($14.99/mo) for Facebook.
+Creators and small businesses paying (or about to pay) for Meta One per profile — starting with Amber / Awaken With Amber LLC, currently on Essential for Facebook.
 
 ## Requirements (MVP = shipped in v0.1)
 | # | Requirement | Status |
@@ -30,7 +30,7 @@ Creators and small businesses paying (or about to pay) $14.99–$499/mo per prof
 
 ## Feature comparison matrix
 
-| Capability | Meta One Essential $14.99/profile | Meta One Advanced $49.99/profile | **Meta Free $0** |
+| Capability | Meta One Essential | Meta One Advanced | **Meta Free — Enterprise Edition** |
 |---|---|---|---|
 | Verified badge on Meta apps | Apply (Meta decides) | Apply | ✗ Cannot issue — Meta's alone |
 | Impersonation protection | ✓ (Meta-internal) | ✓ | ✗ Cannot — Meta-internal; Meta Free adds a *watchlist log* to record/report impersonators |
@@ -43,13 +43,13 @@ Creators and small businesses paying (or about to pay) $14.99–$499/mo per prof
 | AI customer replies | Business Agent, metered | Business Agent, more capacity | **Local suggested replies + auto-reply rules, unmetered, offline** |
 | AI captions/hashtags | Via Meta AI quota | Via Meta AI quota | **Local generator, unmetered** |
 | Team access without password sharing | — | ✓ | **✓ Roles + invite codes** |
-| Human support | — | — (Expert $149+) | Community/self — you own the code |
-| Price for 3 profiles | $44.97/mo | $149.97/mo | **$0** |
+| Human support | — | — (top tiers) | Community/self — you own the code |
+| Approval workflow / audit log / backups | — | — | **✓ Built in, always on** |
 | Data ownership / export everything | ✗ | ✗ | **✓ Full JSON export, local storage** |
 | Self-hosting | ✗ | ✗ | **✓ Any Node host / your own machine** |
 | Works offline | ✗ | ✗ | **✓ (local-first)** |
 
-*Pricing/feature cells for Meta One: VERIFIED from Meta's official plans page and 15 Sep 2026 business announcement as quoted by trade press; per-tier link counts are REPORTED (see audit).*
+*Feature cells for Meta One: VERIFIED from Meta's official plans page and 15 Sep 2026 business announcement as quoted by trade press; per-tier link counts are REPORTED (see audit). Prices are intentionally not reproduced — Meta Free displays no prices anywhere, including its docs.*
 
 ## Success criteria for v0.1
-- A new user can register, build a link page, plan a week of posts by typing one natural-language command, import a metrics CSV, export everything, and invite a teammate — in under 10 minutes, at $0, with tests passing.
+- A new user can register, build a link page, plan a week of posts by typing one natural-language command, import a metrics CSV, export everything, and invite a teammate — in under 10 minutes, free, with tests passing.
