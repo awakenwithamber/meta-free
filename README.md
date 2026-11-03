@@ -13,7 +13,7 @@ Honest limit: no third-party app can issue Meta's verified badge, run Meta's imp
 ```bash
 node app/server.js     # Node ≥20, zero dependencies, nothing to install
 # → http://localhost:4173
-npm test               # 8 automated tests
+npm test               # 18 automated tests
 ```
 
 ## Docs
@@ -22,11 +22,13 @@ npm test               # 8 automated tests
 - [03 — Architecture & stack](docs/03-architecture-and-stack.md)
 - [04 — Security & privacy](docs/04-security-and-privacy.md)
 - [05 — Deployment, user guide & roadmap](docs/05-deployment-user-guide-roadmap.md)
+- [06 — Connections & the Profile Completion Agent](docs/06-connections-and-agent.md)
+- [07 — Storage backends](docs/07-storage.md) (local file, or durable private Vercel Blob when `BLOB_READ_WRITE_TOKEN` is set)
 
 ## Layout
 ```
 app/server.js        server + REST API
-app/lib/             store, auth, nl parser, assistant, analytics, plugins
+app/lib/             store (+ durable Blob backend), auth, nl parser, assistant, analytics, plugins
 public/              dashboard / planner / inbox / links / analytics / team UI
 tests/               node:test suite
 data/db.json         your database (created on first run; back this file up)

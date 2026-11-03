@@ -17,6 +17,12 @@ The app is a single Node process with no build step, so it fits free web-service
 2. Set `PORT` if your host requires it (the app already reads `PORT`).
 3. **Honest limits:** free tiers may sleep when idle (first visit wakes it, ~30s), may have ephemeral disks — if the disk resets, `data/db.json` resets. For anything you care about, option A (your own hardware) or a paid tiny VPS is the durable choice; the app itself stays $0 forever.
 
+### D. Vercel (the live deployment)
+Deployed at https://meta-free-awakenagain2.vercel.app. Storage is **durable**: a private
+Vercel Blob store (`meta-free-db`) holds the database, so accounts and data survive
+deploys and restarts — see [07 — Storage backends](07-storage.md) for how it works.
+(Vercel without a connected Blob store would fall back to ephemeral `/tmp` storage.)
+
 ### C. Self-host with a domain + HTTPS
 Put it behind Caddy or nginx with automatic TLS, pointed at the Node port. Set the session cookie `Secure` flag (see docs/04) once HTTPS is on.
 
@@ -33,9 +39,10 @@ Put it behind Caddy or nginx with automatic TLS, pointed at the Node port. Set t
 8. **Ask Meta Free** (Settings) — built-in help for common questions.
 
 ## Maintenance
-- Back up `data/db.json` (that's the whole database).
+- Back up `data/db.json` (that's the whole database) on the file backend; on Vercel the
+  durable copy is the Blob store — use Settings → Export JSON for a portable backup.
 - Update = replace `app/` and `public/`; your data file is untouched by code updates.
-- Tests: `npm test` (8 tests, Node's built-in runner).
+- Tests: `npm test` (18 tests, Node's built-in runner).
 
 ## Roadmap
 | Phase | Item | Blocker / note |

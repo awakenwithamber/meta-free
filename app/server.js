@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { Store } = require('./lib/store');
+const { blobBackendFromEnv } = require('./lib/blob');
 const auth = require('./lib/auth');
 const { parseCommand, PLATFORMS } = require('./lib/nl');
 const assistant = require('./lib/assistant');
@@ -15,10 +16,13 @@ const { runCompletion } = require('./lib/agent');
 
 const PORT = process.env.PORT || 4173;
 const ROOT = path.join(__dirname, '..');
-// Local/self-hosted: durable data/db.json. On Vercel (read-only FS) fall back to /tmp —
-// which is ephemeral per function instance; see docs/05 for that try-it limit.
+// Storage (docs/07): with BLOB_READ_WRITE_TOKEN set (Vercel adds it when the Blob store
+// is connected), the DB lives in a durable private Blob and survives deploys/restarts.
+// META_FREE_DB forces the file backend. Otherwise: durable local data/db.json; on Vercel
+// without a Blob store, /tmp — ephemeral per function instance (a try-it limit only).
 const DATA_FILE = process.env.META_FREE_DB || (process.env.VERCEL ? '/tmp/meta-free-db.json' : path.join(ROOT, 'data', 'db.json'));
-const store = new Store(DATA_FILE);
+const blobBackend = process.env.META_FREE_DB ? null : blobBackendFromEnv();
+const store = blobBackend ? new Store(null, blobBackend) : new Store(DATA_FILE);
 const PUBLIC = path.join(ROOT, 'public');
 
 function json(res, status, body) {
@@ -55,7 +59,17 @@ function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;
 const handler = async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
   const p = url.pathname;
+  // Durable backend: never end a response while a write-through save is still in
+  // flight — on serverless the instance can freeze the moment the response ends.
+  const rawEnd = res.end.bind(res);
+  let endCalled = false;
+  res.end = (...args) => {
+    if (endCalled) return;
+    endCalled = true;
+    Promise.resolve(store.flush()).catch(() => {}).then(() => rawEnd(...args));
+  };
   try {
+    await store.init(); // loads the durable document once per instance (no-op for file backend)
     // ---------- public link page ----------
     if (req.method === 'GET' && p.startsWith('/p/')) {
       const slug = decodeURIComponent(p.slice(3));
