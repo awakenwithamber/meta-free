@@ -16,6 +16,7 @@ const { runCompletion } = require('./lib/agent');
 const enterprise = require('./lib/enterprise');
 const plansLib = require('./lib/plans');
 const billing = require('./lib/billing');
+const beta = require('./lib/beta');
 const claims = require('./lib/claims');
 const providers = require('./lib/providers');
 const stripeLib = require('./lib/providers/stripe');
@@ -981,6 +982,18 @@ ${links.map(l => `<a class="linkbtn" href="/go/${l.id}" rel="noopener">${esc(l.t
           interest: member.role === 'owner' ? interest.map(x => ({ email: x.email, planId: x.planId, planName: x.planName, price: x.price, reference: x.reference || null, followUp: x.followUp ? x.followUp.status : null, createdAt: x.createdAt })) : undefined,
           platformOwner: isPlatformOwner,
           allInterest,
+          // Beta tester trial (lib/beta): a gated path, closed unless
+          // the platform owner opens it. `mine` is this workspace's
+          // beta trial (null when its trial — if any — came from the
+          // public path). Consent sentences are generated server-side
+          // from the rate card so the wording can never drift.
+          beta: {
+            enabled: beta.betaEnabled(store),
+            label: plansLib.BETA_TRIAL_LABEL,
+            notice: plansLib.BETA_TRIAL_NOTICE,
+            mine: beta.betaTrialView(beta.betaTrialOf(store, wsId)),
+            consentTextByPlan: Object.fromEntries(plansLib.plans().map(pl2 => [pl2.id, beta.betaConsentText({ planName: pl2.name, priceText: pl2.price })])),
+          },
         });
       }
       if (p === '/api/plans/interest' && req.method === 'POST') {
@@ -1096,6 +1109,62 @@ ${links.map(l => `<a class="linkbtn" href="/go/${l.id}" rel="noopener">${esc(l.t
         const upd = store.update('trials', existing.id, { status: 'canceled', canceledAt: new Date().toISOString() });
         act('plan.trial.cancel', `${existing.tierName} · access retained to ${existing.endsAt} · no charge`);
         return json(res, 200, { ok: true, trial: billing.trialView(upd), notice: 'Trial canceled. Your access continues until the trial end date shown, and you will not be charged.' });
+      }
+
+      // ---------- beta tester trial (lib/beta — GATED, never charges) --
+      // The owner opens/closes beta signups with the settings route
+      // below (platform owner only). Starting a beta trial follows the
+      // public trial's rules — named paid tier, Terms Acceptance when
+      // enforcement is on, one free trial per workspace EVER across
+      // both paths — with the beta differences enforced in lib/beta:
+      // no provider registration and no charge anchor, so nothing can
+      // ever be charged, and the workspace returns to Free at the end.
+      if (p === '/api/plans/beta/settings' && req.method === 'POST') {
+        if (!platformOwnerNow) return json(res, 403, { error: 'Only the platform owner can open or close beta tester signups.' });
+        const b = await readBody(req);
+        const row = beta.setBetaEnabled(store, b.enabled === true, user.email);
+        act('plan.beta.settings', `beta tester signups ${row.enabled ? 'OPENED' : 'CLOSED'}`);
+        return json(res, 200, { ok: true, beta: { enabled: row.enabled } });
+      }
+      if (p === '/api/plans/beta-trial' && req.method === 'POST') {
+        if (!beta.betaEnabled(store)) return json(res, 403, { error: 'The beta tester trial is not open right now. Beta signups open and close by the platform owner — the founding waitlist is open to everyone in the meantime.' });
+        if (platformOwnerNow) return json(res, 400, { error: 'The platform owner workspace already runs the full Max plan at $0 — no trial is needed.' });
+        const b = await readBody(req);
+        const plan = plansLib.planById(String(b.planId || ''));
+        if (!plan) return json(res, 400, { error: 'Unknown plan.' });
+        const existing = billing.latestTrial(store, wsId);
+        if (existing) {
+          if (existing.status === 'running' && existing.beta) {
+            if (existing.tierId !== plan.id) {
+              // Mid-trial tier switch edits the SAME beta trial; the
+              // end never moves and there is no provider mirror to sync.
+              const upd = store.update('trials', existing.id, { tierId: plan.id, tierName: plan.name, disclosedPriceCents: plan.priceCents, disclosedPrice: plan.price, switchedAt: new Date().toISOString() });
+              act('plan.beta.switch', `${plan.name} · ${plan.price}/month · beta trial end unchanged (${existing.endsAt})`);
+              return json(res, 200, { ok: true, switched: true, trial: beta.betaTrialView(upd), notice: plansLib.BETA_TRIAL_NOTICE });
+            }
+            return json(res, 200, { ok: true, already: true, trial: beta.betaTrialView(existing), notice: plansLib.BETA_TRIAL_NOTICE });
+          }
+          if (existing.status === 'running') return json(res, 409, { error: 'This workspace already has a free trial running. One free trial per workspace — the beta trial cannot be stacked on top of it.' });
+          return json(res, 409, { error: 'This workspace has already used its free trial. The founding waitlist is still open.' });
+        }
+        // Same Terms Acceptance gate as the public path: a NEW trial
+        // requires the separate billing authorization while enforcement
+        // is on; the beta panel shows the beta wording (lib/beta).
+        const consentOn = consent.enforcementOn();
+        if (consentOn) {
+          const bv = consent.validateBillingAcceptance(b);
+          if (!bv.ok) return json(res, 400, { error: bv.error });
+        }
+        const rec = beta.startBetaTrial(store, { ws, user, plan, now: Date.now() });
+        if (consentOn) {
+          consent.recordConsent(store, {
+            accountId: user.id, kind: 'billing', source: 'beta-trial-start',
+            ip: consent.clientIp(req), userAgent: consent.userAgentOf(req),
+            context: { planId: plan.id, planName: plan.name, priceCents: plan.priceCents, beta: true, endsAt: rec.endsAt },
+          });
+        }
+        act('plan.beta', `${plan.name} · ${plan.price}/month · beta tester trial · ends ${rec.endsAt} · returns to Free · no charge`);
+        return json(res, 201, { ok: true, trial: beta.betaTrialView(rec), notice: plansLib.BETA_TRIAL_NOTICE });
       }
 
       // enterprise edition: features, storage, honest limit
