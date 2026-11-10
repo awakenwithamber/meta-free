@@ -423,6 +423,15 @@ async function refreshAll() {
   $('#plansSource').textContent = `Rate card: 50% of ${pl.source.product} prices verified from ${pl.source.verifiedFrom} on ${pl.source.verifiedOn}. True halves of $14.99 and $49.99 are $7.495 and $24.995, rounded half-up to $7.50 and $25.00.`;
   const trial = pl.myTrial;
   const trialBlock = t => {
+    if (trial && trial.beta) {
+      // Beta trial (lib/beta): never a first charge — when it ends the
+      // workspace returns to Free. Never render the public trial's
+      // first-charge framing for it.
+      if (trial.tierId === t.id && trial.effectiveStatus === 'running' && trial.status !== 'canceled') return `<p><span class="badge">Beta trial running</span><br><strong>Beta trial: ${trial.daysRemaining} day${trial.daysRemaining === 1 ? '' : 's'} left</strong> — ${esc(t.name)}, ${esc(t.price)}/month at founding pricing.<br>When it ends, your workspace returns to the Free plan — you will not be charged.<br><button data-cancel-trial="1">Cancel trial</button></p>`;
+      if (trial.tierId === t.id && trial.status === 'canceled') return `<p><span class="badge">Beta trial canceled</span><br>Your access continues until ${esc(new Date(trial.endsAt).toLocaleString())}, then your workspace returns to the Free plan. You will not be charged.</p>`;
+      if (trial.effectiveStatus === 'running') return `<button data-beta-switch="${esc(t.id)}">Switch my beta trial to ${esc(t.name)} (same end date)</button>`;
+      return '<p><small>This workspace has already used its free trial.</small></p>';
+    }
     if (!trial) return `<button data-trial="${esc(t.id)}">Start 30-day free trial — pre-launch record, no charge</button>`;
     if (trial.tierId === t.id && trial.effectiveStatus === 'running') return `<p><span class="badge">Trial running</span><br><strong>Trial: ${trial.daysRemaining} day${trial.daysRemaining === 1 ? '' : 's'} left</strong> — ${esc(t.name)}, ${esc(t.price)}/month.<br>First charge would be ${esc(new Date(trial.firstChargeAt).toLocaleString())} (about 2:00 AM Mountain Time). Billing is not live yet — you will not be charged.<br><button data-cancel-trial="1">Cancel trial</button></p>`;
     if (trial.tierId === t.id && trial.status === 'canceled') return `<p><span class="badge">Trial canceled</span><br>Your access continues until ${esc(new Date(trial.endsAt).toLocaleString())}, and you will not be charged.</p>`;
@@ -488,6 +497,93 @@ async function refreshAll() {
       refreshAll();
     } catch (err) { $('#planMsg').textContent = err.message; }
   }));
+  // Beta tester trial (lib/beta): its own card, shown when signups are
+  // open, when this workspace holds a beta trial, or to the platform
+  // owner (who controls the gate). The full beta notice renders ABOVE
+  // any button — terms first, signup second (visible-notices rule).
+  const betaInfo = pl.beta;
+  const postBetaTrial = async (planId, extra) => api('/api/plans/beta-trial', { method: 'POST', body: JSON.stringify({ planId, ...(extra || {}) }) });
+  const startBetaWithConsent = async (planId, msgEl) => {
+    const startBeta = async (extra) => {
+      const r = await postBetaTrial(planId, extra);
+      msgEl.textContent = r.switched ? 'Beta trial switched — the end date did not change, and you will not be charged.' : 'Beta trial started. It is free for 30 days, and you will not be charged — when it ends, your workspace returns to the Free plan.';
+      refreshAll();
+    };
+    if (consentPolicy && consentPolicy.enforcement) {
+      const plan = pl.plans.find(t => t.id === planId);
+      const panel = $('#billingConsentPanel');
+      panel.innerHTML = `<div class="card"><h2>Beta trial terms — ${esc(plan.name)}</h2>
+<label class="consent-check"><input type="checkbox" id="billing-consent-check"> <span>${esc((betaInfo.consentTextByPlan || {})[plan.id] || '')}</span></label>
+<p class="err" id="billingConsentErr" role="alert"></p>
+<button id="billingConsentGo" disabled>Start my 30-day beta trial</button>
+<button id="billingConsentCancel" type="button">Not now</button></div>`;
+      const check = $('#billing-consent-check');
+      const go = $('#billingConsentGo');
+      check.addEventListener('change', () => { go.disabled = !check.checked; });
+      $('#billingConsentCancel').addEventListener('click', () => { panel.innerHTML = ''; });
+      go.addEventListener('click', async () => {
+        try {
+          await startBeta({ billingConsentAccepted: check.checked, billingVersion: consentPolicy.versions.billingVersion });
+          panel.innerHTML = '';
+        } catch (err) { $('#billingConsentErr').textContent = err.message; }
+      });
+      return;
+    }
+    await startBeta();
+  };
+  $('#planGrid').querySelectorAll('button[data-beta-switch]').forEach(b => b.addEventListener('click', async () => {
+    try {
+      const r = await postBetaTrial(b.dataset.betaSwitch);
+      $('#planMsg').textContent = r.switched ? 'Beta trial switched — the end date did not change, and you will not be charged.' : 'Beta trial updated.';
+      refreshAll();
+    } catch (err) { $('#planMsg').textContent = err.message; }
+  }));
+  const betaCard = $('#betaCard');
+  if (betaCard && betaInfo) {
+    const mine = betaInfo.mine;
+    betaCard.hidden = !(betaInfo.enabled || mine || pl.platformOwner);
+    $('#betaTitle').textContent = betaInfo.label || 'Beta tester trial — 30 days free';
+    $('#betaNotice').textContent = betaInfo.notice || '';
+    const body = $('#betaBody');
+    if (mine && mine.status !== 'canceled' && mine.effectiveStatus === 'running') {
+      body.innerHTML = `<p><span class="badge">Beta trial running</span><br><strong>${mine.daysRemaining} day${mine.daysRemaining === 1 ? '' : 's'} left</strong> — ${esc(mine.tierName)}, ${esc(mine.price)}/month at founding pricing.<br>Your trial ends ${esc(new Date(mine.endsAt).toLocaleString())}. When it ends, your workspace returns to the Free plan — you will not be charged.<br><button data-beta-cancel="1">Cancel beta trial</button></p>`;
+    } else if (mine && mine.status === 'canceled') {
+      body.innerHTML = `<p><span class="badge">Beta trial canceled</span><br>Your access continues until ${esc(new Date(mine.endsAt).toLocaleString())}, then your workspace returns to the Free plan. You will not be charged.</p>`;
+    } else if (mine) {
+      body.innerHTML = '<p><small>This workspace has already used its free trial.</small></p>';
+    } else if (betaInfo.enabled) {
+      body.innerHTML = pl.plans.map(t => `<p><strong>${esc(t.name)}</strong> — ${esc(t.price)}/month at founding pricing<br><button data-beta-trial="${esc(t.id)}">Start my 30-day beta trial — ${esc(t.name)}</button></p>`).join('');
+    } else {
+      body.innerHTML = '<p><small>Beta tester signups are closed right now.</small></p>';
+    }
+    body.querySelectorAll('button[data-beta-trial]').forEach(b => b.addEventListener('click', async () => {
+      try { await startBetaWithConsent(b.dataset.betaTrial, $('#betaMsg')); }
+      catch (err) { $('#betaMsg').textContent = err.message; }
+    }));
+    const betaCancel = body.querySelector('button[data-beta-cancel]');
+    if (betaCancel) betaCancel.addEventListener('click', async () => {
+      try {
+        await api('/api/plans/trial/cancel', { method: 'POST', body: '{}' });
+        $('#betaMsg').textContent = 'Beta trial canceled. Access continues until the trial end date, and you will not be charged.';
+        refreshAll();
+      } catch (err) { $('#betaMsg').textContent = err.message; }
+    });
+  }
+  const betaOwnerCard = $('#betaOwnerCard');
+  if (betaOwnerCard && betaInfo) {
+    betaOwnerCard.hidden = !pl.platformOwner;
+    if (pl.platformOwner) {
+      const toggle = $('#betaEnabledToggle');
+      toggle.checked = !!betaInfo.enabled;
+      toggle.onchange = async () => {
+        try {
+          const r = await api('/api/plans/beta/settings', { method: 'POST', body: JSON.stringify({ enabled: toggle.checked }) });
+          $('#betaOwnerMsg').textContent = r.beta && r.beta.enabled ? 'Beta tester signups are now OPEN.' : 'Beta tester signups are now CLOSED.';
+          refreshAll();
+        } catch (err) { $('#betaOwnerMsg').textContent = err.message; toggle.checked = !toggle.checked; }
+      };
+    }
+  }
   $('#claimCard').hidden = !(ME && ME.claimStatus === 'pending');
   if (pl.interest) {
     $('#planInterestCard').hidden = false;
