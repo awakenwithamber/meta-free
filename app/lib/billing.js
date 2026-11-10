@@ -121,6 +121,9 @@ function trialView(trial, nowMs = Date.now()) {
     simulated: !!trial.simulated,
     conversionOutcome: trial.conversionOutcome || null,
     preLaunch: true,
+    // Beta tester trials (lib/beta) share this record shape; surfaces
+    // must branch on it — a beta trial has NO first charge, ever.
+    beta: !!trial.beta,
   };
 }
 function latestTrial(store, workspaceId) {

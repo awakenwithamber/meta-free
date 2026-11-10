@@ -87,6 +87,14 @@ function newReference(existingRefs) {
 // shown before anyone opts in). Trials in Meta Free are RECORDS ONLY until
 // billing activates — this wording must never overstate that.
 const TRIAL_NOTICE = 'PRE-LAUNCH TRIAL — billing is not live yet, and you will not be charged. Starting a trial only records your tier, its exact founding price, and the dates shown. If billing ever activates, the first charge would fall on the first-charge date shown — and you can cancel any time before then and pay nothing.';
+// Beta tester trial (owner order 2026-11-10): a SEPARATE, gated path from
+// the public pre-launch trial above. The terms differ in one important
+// way and the copy must never blur it: a beta trial NEVER charges — not
+// during the 30 days and not at the end. On day 30 the workspace returns
+// to the Free plan unless the tester chooses a paid plan when billing
+// opens. Visible-notices rule: stated in full, before anyone signs up.
+const BETA_TRIAL_LABEL = 'Beta tester trial — 30 days free';
+const BETA_TRIAL_NOTICE = 'BETA TESTER TRIAL — free for 30 days, and you will not be charged. Beta testers try one paid plan free for 30 days: you get the full plan from the day you start, no payment method is taken, and nothing is charged during the trial or when it ends. When the 30 days end, your workspace simply returns to the Free plan, unless you choose to join the founding waitlist or start a paid plan when billing opens. You can cancel any time during the trial and keep access until the trial end date shown. One beta trial per workspace.';
 const CURRENT_STATE_NOTE = 'Workspaces created before the Free plan existed keep the full Enterprise feature set, free (grandfathered — nothing was taken away). New workspaces start on the Free plan (link page + planner). Paid founding tiers can be reserved on the waitlist, or recorded as a pre-launch trial — billing is not live and no payment is taken.';
 
 function plans() {
@@ -126,4 +134,4 @@ function planForFeature(featureId) {
   return null;
 }
 
-module.exports = { SOURCE, SOURCE_PRICE_CENTS, TIER_FEATURES, TIER_ORDER, TIER_NAMES, FREE_TIER, FOUNDING_LABEL, INTEREST_LABEL, CURRENT_STATE_NOTE, TRIAL_NOTICE, PAYMENT_NOTE, REFERENCE_MESSAGE, newReference, halfPriceCents, fmt, plans, planById, freePlan, planForFeature };
+module.exports = { SOURCE, SOURCE_PRICE_CENTS, TIER_FEATURES, TIER_ORDER, TIER_NAMES, FREE_TIER, FOUNDING_LABEL, INTEREST_LABEL, CURRENT_STATE_NOTE, TRIAL_NOTICE, BETA_TRIAL_LABEL, BETA_TRIAL_NOTICE, PAYMENT_NOTE, REFERENCE_MESSAGE, newReference, halfPriceCents, fmt, plans, planById, freePlan, planForFeature };

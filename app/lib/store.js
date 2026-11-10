@@ -42,7 +42,7 @@ const crypto = require('crypto');
 // 'campaigns' / 'segments' / 'personas' / 'abTests' are declared in
 // the same pass so the store shape lands once; they stay empty until
 // the Campaign Command Center packages write them.
-const COLLECTIONS = ['users','sessions','workspaces','posts','links','messages','metrics','rules','members','competitors','notifications','watchlist','connections','agentRuns','activity','planInterest','trials','claimCodes','providerSubs','providerInvoices','consentRecords','passwordResets','outbox','providerCalls','stripeEvents','feedRuns','ordersDaily','campaigns','segments','personas','abTests'];
+const COLLECTIONS = ['users','sessions','workspaces','posts','links','messages','metrics','rules','members','competitors','notifications','watchlist','connections','agentRuns','activity','planInterest','trials','claimCodes','providerSubs','providerInvoices','consentRecords','passwordResets','outbox','providerCalls','stripeEvents','feedRuns','ordersDaily','campaigns','segments','personas','abTests','settings'];
 
 function emptyDb() {
   const db = {};
