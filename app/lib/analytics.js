@@ -40,4 +40,45 @@ function rollup(metrics) {
   return Object.values(byPlatform).sort((a, b) => b.likes + b.clicks - (a.likes + a.clicks));
 }
 
-module.exports = { parseCsv, toCsv, rollup };
+// Numeric-or-null: only a finite number counts as a measured value.
+// null / undefined / '' / non-numeric => null (UNAVAILABLE) — never 0.
+function numOrNull(v) {
+  return (typeof v === 'number' && Number.isFinite(v)) ? v : null;
+}
+
+// Additive second pass (Awaken Meta PKG-1): totals grouped by
+// platform x label so pulled numbers are never silently blended with
+// hand-entered ones. Legacy rows carry no label — they are the
+// pre-existing import path, so they group as IMPORTED. A field's value
+// is the sum of its numeric values only, or null when NO row in the
+// group carried a number for it (unavailableRows counts those rows) —
+// a missing value is never totalled as 0.
+// sessions/visitors added by Awaken Meta PKG-3 (PostHog website rows);
+// spendCents/impressions/conversions added by PKG-9 (Meta Ads rows);
+// rows that never carry them count them as unavailable, same null law.
+const SOURCE_FIELDS = ['likes', 'comments', 'shares', 'clicks', 'reach', 'views', 'followers', 'newFollowers', 'profileVisits', 'sessions', 'visitors', 'spendCents', 'impressions', 'conversions'];
+function rollupBySource(metrics) {
+  const groups = {};
+  for (const m of metrics || []) {
+    const platform = m.platform || 'unknown';
+    const label = m.label || 'IMPORTED';
+    const key = platform + '|' + label;
+    const g = groups[key] || (groups[key] = { platform, label, source: m.source || 'import', rows: 0, fields: {} });
+    g.rows += 1;
+    for (const f of SOURCE_FIELDS) {
+      const cell = g.fields[f] || (g.fields[f] = { value: null, unavailableRows: 0 });
+      const n = numOrNull(m[f]);
+      if (n === null) cell.unavailableRows += 1;
+      else cell.value = (cell.value === null ? 0 : cell.value) + n;
+    }
+  }
+  return Object.values(groups).sort((a, b) => (a.platform + a.label).localeCompare(b.platform + b.label));
+}
+
+// The one honest rendering of a metric value: a number renders as
+// itself; anything else renders UNAVAILABLE — never 0.
+function formatMetric(v) {
+  return numOrNull(v) === null ? 'UNAVAILABLE' : String(v);
+}
+
+module.exports = { parseCsv, toCsv, rollup, rollupBySource, formatMetric, numOrNull, SOURCE_FIELDS };

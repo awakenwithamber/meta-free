@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
-<title>Meta Free — Enterprise Edition · your social workspace, free forever</title>
+<title>Awaken Affordable Meta — Enterprise Edition · your social workspace, free forever</title>
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
 <header>
-  <div class="brand"><span class="brand-font">Meta Free</span> <span class="badge">Enterprise Edition</span> <span class="tag">Free forever · Every feature on · Your data stays yours</span></div>
+  <div class="brand"><span class="brand-font">Awaken Affordable Meta</span> <span class="badge">Enterprise Edition</span> <span class="badge" id="ownerBadge" hidden>Platform owner</span> <span class="tag">Free forever · Every feature on · Your data stays yours</span></div>
   <nav id="topnav" hidden>
     <button data-view="dashboard">Dashboard</button>
     <button data-view="planner">Planner</button>
@@ -19,31 +19,77 @@
     <button data-view="connect">Connect</button>
     <button data-view="activity">Activity</button>
     <button data-view="enterprise">Enterprise</button>
+    <button data-view="plans">Plans</button>
     <button data-view="team">Team &amp; Settings</button>
     <button id="logout">Sign out</button>
   </nav>
 </header>
 
 <main id="auth" >
+  <!-- Public landing (owner build 2026-11-08): what a signed-out visitor
+       sees. The pricing table is rendered from GET /api/plans/public so
+       the public numbers are always the lib/plans.js rate card itself.
+       Every claim below names only features that exist in the app. -->
+  <section id="landing">
+    <div class="card">
+      <h1 class="brand-font">Your social workspace shouldn't hold your wallet hostage.</h1>
+      <p>Awaken Affordable Meta is my free alternative to the workflow Meta One sells by subscription — a workspace you own: a public link page, a content planner with a plain-language command bar, an inbox with suggested replies, analytics, competitor tracking, team roles, and backups.</p>
+      <p><strong>Start free — the Free plan is free forever, no card, ever.</strong> Founding tiers unlock more at exactly <strong>half of Meta One's prices</strong>. Today those tiers are waitlist-only — joining takes no card and no charge.</p>
+      <p><button type="button" id="landingCta">Create your free workspace</button></p>
+      <p><small>Joining the founding waitlist is an interest record only — no payment is taken, and no subscription is created.</small></p>
+    </div>
+    <div class="card">
+      <h2>What you get</h2>
+      <ul id="landingFeatures"></ul>
+    </div>
+    <div class="card">
+      <h2>Founding pricing — half of Meta One</h2>
+      <p class="banner" id="landingFounding" role="note">Founding pricing — checkout not yet connected</p>
+      <div class="grid" id="landingPlans"></div>
+      <p id="landingPayNote"></p>
+      <p><small id="landingSource"></small></p>
+    </div>
+    <div class="card">
+      <h2>The honest limit</h2>
+      <p id="landingLimit"></p>
+      <p><small>Awaken Affordable Meta is an independent tool by Awaken With Amber LLC, built on no Meta code. It is not affiliated with Meta Platforms, Inc.; “Meta One” is named only to describe the subscription this tool offers an alternative workflow to.</small></p>
+    </div>
+  </section>
   <section class="card">
-    <h1 class="brand-font">Welcome to Meta Free — Enterprise Edition</h1>
-    <p><strong>Free. No fees, no subscription, no payment — ever.</strong> Everything Meta One reserves for its top tiers — planning, link pages, analytics, inbox help, team access — is here in full: every feature on, nothing metered, nothing locked, in a workspace you own. The one thing no app can give you is Meta's own verified badge; everything else is here.</p>
+    <h1 class="brand-font">Welcome to Awaken Affordable Meta</h1>
+    <p><strong>Start free — free forever, no card, ever.</strong> A new workspace begins on the Free plan (link page + content planner). Founding tiers unlock the rest — inbox help, auto-reply rules, analytics, team access, backups — at exactly half of Meta One's prices, and today they are waitlist-only: <strong>no checkout, no charge</strong>. Workspaces created before the Free plan existed keep the full Enterprise feature set, free (grandfathered — nothing was taken away). The one thing no app can give you is Meta's own verified badge.</p>
     <div class="cols">
       <form id="loginForm">
         <h2>Sign in</h2>
         <label>Email <input type="email" name="email" required autocomplete="email"></label>
-        <label>Password <input type="password" name="password" required autocomplete="current-password"></label>
+        <label>Password <input type="password" id="loginPassword" name="password" required autocomplete="current-password"></label>
+        <button type="button" class="pw-toggle" data-target="loginPassword" aria-pressed="false">Show password</button>
         <button type="submit">Sign in</button>
+        <p><a href="#" id="forgotLink">Forgot your password?</a></p>
+        <p><small>Sign-in is protected: after a few failed attempts it slows down, and after too many failed attempts from one connection it pauses for about 15 minutes. If that happens to you, check the email and password you're typing — passwords are case-sensitive — or reset your password with the link above.</small></p>
       </form>
       <form id="registerForm">
         <h2>Create your free workspace</h2>
         <label>Your name <input name="name" autocomplete="name"></label>
         <label>Email <input type="email" name="email" required autocomplete="email"></label>
-        <label>Password (8+ characters) <input type="password" name="password" required autocomplete="new-password"></label>
+        <label>Password (8+ characters) <input type="password" id="registerPassword" name="password" required autocomplete="new-password"></label>
+        <button type="button" class="pw-toggle" data-target="registerPassword" aria-pressed="false">Show password</button>
         <label>Brand / workspace name <input name="workspace" placeholder="Awaken With Amber"></label>
-        <button type="submit">Create free account</button>
+        <div id="regConsent"></div>
+        <button type="submit" id="registerSubmit">Create free account</button>
       </form>
     </div>
+    <!-- Forgot-password view (owner directive 2026-11-07): the server
+         answers the SAME message whether or not the account exists, and
+         says honestly that the reset message is QUEUED in the outbox,
+         not sent — no email provider is connected yet. -->
+    <form id="forgotForm" hidden>
+      <h2>Reset your password</h2>
+      <p>If an account exists for that email, a password reset link will be queued in the outbox. No email provider is connected to Awaken Affordable Meta yet, so the message is <strong>QUEUED — not sent</strong>. Reset links expire 60 minutes after they are requested.</p>
+      <label>Email <input type="email" id="forgotEmail" name="email" required autocomplete="email"></label>
+      <button type="submit">Email me a reset link</button>
+      <p id="forgotMsg" role="status"></p>
+    </form>
     <p class="err" id="authErr" role="alert"></p>
   </section>
 </main>
@@ -65,7 +111,7 @@
   <section id="view-planner" class="view" hidden>
     <div class="card" id="dueCard">
       <h2>Due — ready to publish</h2>
-      <p><small>Scheduled posts whose time has come and that are approved. Meta Free can't post into Meta's apps for you — copy, paste, then mark published.</small></p>
+      <p><small>Scheduled posts whose time has come and that are approved. Awaken Affordable Meta can't post into Meta's apps for you — copy, paste, then mark published.</small></p>
       <ul id="dueList" class="posts"></ul>
       <p id="dueAwaiting"></p>
     </div>
@@ -168,6 +214,7 @@
     <div class="card">
       <h2>Enterprise Edition — everything on</h2>
       <p><strong id="entFreeLine">Free. No fees, no subscription, no payment — ever.</strong></p>
+      <p id="entPlanLine" role="note"></p>
       <p id="entStorage"></p>
       <ul id="featureList"></ul>
       <p><small id="entLimit"></small></p>
@@ -178,6 +225,38 @@
       <button id="backupNow">Back up now</button>
       <p class="ok" id="backupMsg" role="status"></p>
       <ul id="backupList" class="posts"></ul>
+    </div>
+  </section>
+
+  <section id="view-plans" class="view" hidden>
+    <div class="card">
+      <h2>Plans — founding pricing</h2>
+      <p class="banner" id="myPlanBanner" role="note"></p>
+      <p class="banner" id="trialBanner" role="note"></p>
+      <p id="plansProviderLine" role="note"></p>
+      <p><strong id="plansFoundingLabel">Founding pricing — checkout not yet connected</strong></p>
+      <p id="plansPaymentNote"></p>
+      <p id="plansNote"></p>
+      <p><small id="plansSource"></small></p>
+      <div class="grid" id="planGrid"></div>
+      <div id="billingConsentPanel"></div>
+      <p class="ok" id="planMsg" role="status"></p>
+    </div>
+    <div class="card" id="claimCard" hidden>
+      <h2>Platform ownership claim</h2>
+      <p>This account uses a founder email, so its platform-owner access is locked until the claim is verified. Enter the one-time claim code for this account below. The code was recorded in the platform's operator store when the account was created — it is never emailed or shown on any page.</p>
+      <form id="claimForm"><label>One-time claim code <input name="code" required autocomplete="off"></label>
+      <button type="submit">Verify claim &amp; unlock owner access</button><p class="ok" id="claimMsg" role="status"></p></form>
+    </div>
+    <div class="card" id="planInterestCard" hidden>
+      <h2>Founding waitlist — this workspace</h2>
+      <p><small>Interest records only. No payment is taken, ever, from this page.</small></p>
+      <ul id="planInterestList" class="posts"></ul>
+    </div>
+    <div class="card" id="ownerWaitlistCard" hidden>
+      <h2>Founding waitlist — all workspaces <span class="badge">Platform owner</span></h2>
+      <p><small>Every founding waitlist signup across Awaken Affordable Meta, visible only to the platform owner. Interest records only — no payment is taken, ever, from this page.</small></p>
+      <ul id="ownerWaitlistList" class="posts"></ul>
     </div>
   </section>
 
@@ -208,12 +287,13 @@
       <label>Import workspace JSON <textarea id="importBox" rows="3" placeholder='{"posts":[…]}'></textarea></label>
       <div class="row"><button id="importJson">Import</button> <button id="wipe" class="danger">Wipe workspace data</button></div>
       <h3>Plugins</h3><ul id="pluginList"></ul>
-      <h3>Ask Meta Free</h3>
+      <h3>Ask Awaken Affordable Meta</h3>
       <form id="askForm"><label>Question <input name="question" placeholder="How do I export?"></label><button type="submit">Ask</button><p id="askAnswer"></p></form>
     </div>
   </section>
 </main>
-<footer><small>Meta Free — Enterprise Edition · free, local-first, open. Not affiliated with Meta Platforms, Inc. “Meta One” is referenced only to describe the subscription this tool offers an alternative workflow to.</small></footer>
+<footer><small>Awaken Affordable Meta — Enterprise Edition · free, local-first, open. Not affiliated with Meta Platforms, Inc. “Meta One” is referenced only to describe the subscription this tool offers an alternative workflow to.</small></footer>
+<div id="consentModal" hidden></div>
 <script src="/app.js"></script>
 </body>
 </html>

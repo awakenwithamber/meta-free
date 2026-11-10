@@ -7,7 +7,42 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const COLLECTIONS = ['users','sessions','workspaces','posts','links','messages','metrics','rules','members','competitors','notifications','watchlist','connections','agentRuns','activity'];
+// 'trials' = pre-launch trial records (workspace-scoped, exported with the
+// workspace). 'claimCodes' = the founder-claim operator store: rows carry NO
+// workspaceId, so workspace export never includes them, and no API returns
+// them — the operator reads them out-of-band from the database itself.
+// 'providerSubs' / 'providerInvoices' = billing-provider mirrors of trials
+// and their (simulated) invoices, written by lib/providers; workspace-scoped.
+// 'consentRecords' = Terms Acceptance System (owner directive
+// 2026-11-07): append-only consent records (terms / billing /
+// promo-email / promo-sms). Written ONLY while CONSENT_ENFORCEMENT=on
+// (lib/consent.js); the collection stays empty while the system ships
+// dark. Rows carry no workspaceId — consent history is account-scoped,
+// so workspace export never includes another account's records.
+// 'passwordResets' = self-service password recovery (owner directive
+// 2026-11-07, lib/password-reset.js): rows store ONLY the SHA-256 hash
+// of the reset token, an expiry, and a used stamp — never the raw
+// token. 'outbox' = queued outbound email: no email provider is
+// connected, so messages are written here with status QUEUED and are
+// never presented as sent; a future provider sender drains this
+// collection. Both are account-scoped (rows carry workspaceId null),
+// so workspace export never includes token hashes or queued mail.
+// 'providerCalls' = the Stripe provider's call log (ids, amounts,
+// results — never credentials or card data), written by
+// lib/providers/stripe.js. 'stripeEvents' = applied Stripe webhook
+// events, recorded once per event id so Stripe's at-least-once
+// delivery can never double-apply an effect. Both are operator-scoped
+// (rows carry no workspaceId), so workspace export never includes them.
+// 'feedRuns' + 'ordersDaily' = Awaken Meta data-feed layer (PKG-1,
+// lib/feeds.js): feedRuns is one health row per feed execution;
+// ordersDaily holds store daily aggregates only (no customer PII).
+// Feed-written 'metrics' rows are additive extensions of the import
+// row shape — they add source/label/date/window fields and may carry
+// null (never 0) for values a connector did not return numerically.
+// 'campaigns' / 'segments' / 'personas' / 'abTests' are declared in
+// the same pass so the store shape lands once; they stay empty until
+// the Campaign Command Center packages write them.
+const COLLECTIONS = ['users','sessions','workspaces','posts','links','messages','metrics','rules','members','competitors','notifications','watchlist','connections','agentRuns','activity','planInterest','trials','claimCodes','providerSubs','providerInvoices','consentRecords','passwordResets','outbox','providerCalls','stripeEvents','feedRuns','ordersDaily','campaigns','segments','personas','abTests'];
 
 function emptyDb() {
   const db = {};

@@ -65,7 +65,7 @@ function bestTimes(metrics) {
 
 function diagnose(text) {
   const t = String(text).toLowerCase();
-  if (t.includes('login') || t.includes('password')) return 'Check caps lock, then use Settings → Export to confirm you are in the right workspace. Passwords are stored only as scrypt hashes — reset by re-registering a new owner account on your own instance if locked out.';
+  if (t.includes('login') || t.includes('password')) return 'Check caps lock, then use Settings → Export to confirm you are in the right workspace. Passwords are stored only as scrypt hashes. If you are locked out, use “Forgot your password?” on the sign-in page: if an account exists for that email, a single-use reset link (valid 60 minutes) is queued in the outbox — no email provider is connected yet, so it is queued, not sent.';
   if (t.includes('export')) return 'Exports live in Settings: full workspace JSON, plus CSV for posts and metrics. If a download is empty, import data or create a post first.';
   if (t.includes('publish')) return 'In v0.1 posts move draft → scheduled → ready, then use the copy/open hand-off. Direct API publishing is a roadmap plugin (needs a Meta developer app + review).';
   return 'Try the command bar: "schedule <text> tomorrow at 9am on instagram". Docs: docs/06-user-guide.md.';

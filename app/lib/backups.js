@@ -71,7 +71,7 @@ async function restoreBackup(store, name) {
   let parsed;
   try { parsed = JSON.parse(text); } catch { throw new Error('Backup is not valid JSON.'); }
   if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.users) || !Array.isArray(parsed.workspaces)) {
-    throw new Error('Backup does not look like a Meta Free database.');
+    throw new Error('Backup does not look like an Awaken Affordable Meta database.');
   }
   store.db = Object.assign(emptyDb(), parsed);
   store.save();
